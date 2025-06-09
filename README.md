@@ -1,7 +1,3 @@
-Here's a detailed and well-structured `README.md` for your Flask + RAG + Pinecone + Gemini-based PDF ingestion and querying application:
-
----
-
 # 🧠 PDF RAG API with Pinecone and Gemini
 
 This project provides a RESTful API to upload PDF documents, extract and chunk their content, index the content into a **Pinecone vector database**, and perform **Retrieval-Augmented Generation (RAG)** using **Google Gemini** models.
