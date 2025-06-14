@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>RAG App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Google Fonts for cyberpunk style -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <!-- Marked.js and DOMPurify for Markdown rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.9/dist/purify.min.js"></script>
+  <style>
+    :root {
+      --bg: #18122B;
+      --card: #232046;
+      --primary: #FF00CC;
+      --primary-glow: #FF00CC88;
+      --secondary: #00FFD0;
+      --secondary-glow: #00FFD088;
+      --border: #2D2B55;
+      --text: #F8F8F2;
+      --muted: #A3A3C2;
+      --error: #FF5370;
+      --success: #00FFD0;
+    }
+    body {
+      font-family: 'Share Tech Mono', 'Orbitron', Arial, sans-serif;
+      background: var(--bg);
+      margin: 0;
+      padding: 0;
+      color: var(--text);
+      min-height: 100vh;
+      letter-spacing: 0.5px;
+    }
+    .container {
+      max-width: 440px;
+      margin: 48px auto;
+      background: var(--card);
+      border-radius: 18px;
+      box-shadow: 0 0 32px 4px var(--primary-glow), 0 0 8px 2px var(--secondary-glow);
+      padding: 36px 28px 24px 28px;
+      border: 2px solid var(--primary);
+      position: relative;
+      overflow: hidden;
+    }
+    .container::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 18px;
+      pointer-events: none;
+      box-shadow: 0 0 80px 10px var(--primary-glow), 0 0 40px 5px var(--secondary-glow);
+      opacity: 0.25;
+      z-index: 0;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+      position: relative;
+      z-index: 1;
+    }
+    h1 {
+      font-family: 'Orbitron', 'Share Tech Mono', Arial, sans-serif;
+      font-size: 2em;
+      font-weight: 700;
+      margin: 0 0 8px 0;
+      color: var(--primary);
+      letter-spacing: 2px;
+      text-shadow: 0 0 8px var(--primary), 0 0 2px var(--secondary);
+    }
+    p {
+      color: var(--muted);
+      font-size: 1.05em;
+      margin: 0 0 18px 0;
+      text-shadow: 0 0 2px var(--secondary-glow);
+    }
+    .api-link {
+      display: inline-block;
+      margin-top: 8px;
+      color: var(--secondary);
+      text-decoration: none;
+      font-size: 1em;
+      font-family: 'Share Tech Mono', monospace;
+      border-bottom: 1px dashed var(--secondary);
+      transition: color 0.18s, border-color 0.18s;
+    }
+    .api-link:hover {
+      color: var(--primary);
+      border-color: var(--primary);
+      text-shadow: 0 0 8px var(--primary-glow);
+    }
+    main {
+      position: relative;
+      z-index: 1;
+    }
+    section {
+      margin-bottom: 26px;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 14px;
+      position: relative;
+      z-index: 1;
+    }
+    label {
+      font-size: 1em;
+      color: var(--secondary);
+      margin-bottom: 2px;
+      letter-spacing: 1px;
+      text-shadow: 0 0 4px var(--secondary-glow);
+    }
+    textarea {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 1em;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      background: #1A1535;
+      color: var(--text);
+      resize: vertical;
+      transition: border 0.2s, box-shadow 0.2s;
+      box-shadow: 0 0 0 0 var(--primary-glow);
+    }
+    textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 8px 2px var(--primary-glow);
+    }
+    /* Custom file input styles */
+    .file-upload-group {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    input[type="file"] {
+      display: none;
+    }
+    .custom-file-label {
+      display: inline-block;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      color: #fff;
+      border-radius: 8px;
+      padding: 10px 22px;
+      font-size: 1em;
+      font-family: 'Orbitron', 'Share Tech Mono', Arial, sans-serif;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 0 12px 2px var(--primary-glow);
+      border: none;
+      transition: background 0.18s, box-shadow 0.18s;
+      text-shadow: 0 0 4px var(--secondary-glow);
+      letter-spacing: 1px;
+      border: 2px solid var(--primary);
+    }
+    .custom-file-label:hover {
+      background: linear-gradient(90deg, var(--secondary), var(--primary));
+      box-shadow: 0 0 24px 4px var(--secondary-glow);
+      border-color: var(--secondary);
+    }
+    .selected-files {
+      margin-top: 6px;
+      color: var(--secondary);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.98em;
+      word-break: break-all;
+      text-shadow: 0 0 4px var(--secondary-glow);
+    }
+    button {
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 0;
+      font-size: 1.08em;
+      font-family: 'Orbitron', 'Share Tech Mono', Arial, sans-serif;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 2px;
+      letter-spacing: 1px;
+      box-shadow: 0 0 12px 2px var(--primary-glow);
+      transition: background 0.18s, box-shadow 0.18s;
+      text-shadow: 0 0 4px var(--secondary-glow);
+    }
+    button:hover {
+      background: linear-gradient(90deg, var(--secondary), var(--primary));
+      box-shadow: 0 0 24px 4px var(--secondary-glow);
+    }
+    .response-box {
+      background: #1A1535;
+      border-radius: 8px;
+      padding: 14px;
+      margin-top: 8px;
+      color: var(--text);
+      min-height: 32px;
+      border: 2px solid var(--border);
+      font-size: 1em;
+      word-break: break-word;
+      box-shadow: 0 0 8px 1px var(--primary-glow);
+      transition: border 0.2s, box-shadow 0.2s;
+      /* Markdown content styles */
+    }
+    .response-box :is(h1, h2, h3, h4, h5, h6) {
+      color: var(--primary);
+      margin-top: 1em;
+      margin-bottom: 0.5em;
+      text-shadow: 0 0 4px var(--primary-glow);
+    }
+    .response-box pre, .response-box code {
+      background: #232046;
+      color: #00FFD0;
+      border-radius: 6px;
+      padding: 2px 6px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.98em;
+      box-shadow: 0 0 8px 1px var(--secondary-glow);
+    }
+    .response-box pre {
+      padding: 10px;
+      overflow-x: auto;
+      margin: 10px 0;
+    }
+    .response-box a {
+      color: var(--primary);
+      text-decoration: underline;
+      text-shadow: 0 0 4px var(--primary-glow);
+    }
+    .response-box ul, .response-box ol {
+      margin-left: 1.2em;
+      margin-bottom: 1em;
+    }
+    .response-box strong {
+      color: var(--secondary);
+      text-shadow: 0 0 4px var(--secondary-glow);
+    }
+    .response-box:empty {
+      border: 2px dashed var(--border);
+      min-height: 18px;
+      box-shadow: none;
+    }
+    .response-box.success {
+      border-color: var(--success);
+      box-shadow: 0 0 12px 2px var(--secondary-glow);
+      color: var(--success);
+    }
+    .response-box.error {
+      border-color: var(--error);
+      color: var(--error);
+      box-shadow: 0 0 12px 2px var(--error);
+    }
+    footer {
+      margin-top: 22px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 1em;
+      border-top: 1px solid var(--border);
+      padding-top: 12px;
+      letter-spacing: 1px;
+      text-shadow: 0 0 2px var(--primary-glow);
+      z-index: 1;
+      position: relative;
+    }
+    @media (max-width: 600px) {
+      .container {
+        max-width: 98vw;
+        padding: 18px 4vw 12px 4vw;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>RAG App</h1>
+      <p>⚡ Ask questions or upload PDFs for neon-fast answers.</p>
+      <a class="api-link" href="https://rag-app-latest.onrender.com/" target="_blank">API Docs</a>
+    </header>
+    <main>
+      <section>
+        <form id="rag-form" autocomplete="off">
+          <label for="prompt">Ask a question</label>
+          <textarea id="prompt" name="prompt" required placeholder="Type your question here..." rows="3"></textarea>
+          <button type="submit">Ask</button>
+        </form>
+        <div id="response" class="response-box"></div>
+      </section>
+      <section>
+        <form id="upload-form" enctype="multipart/form-data">
+          <label for="pdf-files">Upload PDFs (max 20)</label>
+          <div class="file-upload-group">
+            <input type="file" id="pdf-files" name="files" accept="application/pdf" multiple required>
+            <label for="pdf-files" class="custom-file-label" id="custom-file-label">
+              <span id="file-label-text">Choose Files</span>
+            </label>
+          </div>
+          <div id="selected-files" class="selected-files"></div>
+          <button type="submit">Upload</button>
+        </form>
+        <div id="upload-response" class="response-box"></div>
+      </section>
+    </main>
+    <footer>
+      &copy; 2025 RAG App &mdash; <span style="color:var(--primary)">Cyberpunk Edition</span>
+    </footer>
+  </div>
+  <script>
+    // RAG question form
+    const form = document.getElementById('rag-form');
+    const responseBox = document.getElementById('response');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const prompt = document.getElementById('prompt').value.trim();
+      responseBox.className = "response-box";
+      if (!prompt) {
+        responseBox.textContent = "Please enter a question.";
+        responseBox.classList.add("error");
+        return;
+      }
+      responseBox.textContent = "Loading...";
+      try {
+        const res = await fetch('https://rag-app-latest.onrender.com/rag', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          responseBox.textContent = "Error: " + (data.error || res.statusText);
+          responseBox.classList.add("error");
+          return;
+        }
+        // Render Markdown safely
+        const markdown = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+        responseBox.innerHTML = DOMPurify.sanitize(marked.parse(markdown));
+        responseBox.classList.add("success");
+      } catch (err) {
+        responseBox.textContent = "Network error: " + err.message;
+        responseBox.classList.add("error");
+      }
+    });
+
+    // PDF upload form
+    const uploadForm = document.getElementById('upload-form');
+    const uploadResponse = document.getElementById('upload-response');
+    const pdfFilesInput = document.getElementById('pdf-files');
+    const selectedFiles = document.getElementById('selected-files');
+    const fileLabelText = document.getElementById('file-label-text');
+
+    pdfFilesInput.addEventListener('change', () => {
+      if (pdfFilesInput.files.length === 0) {
+        fileLabelText.textContent = "Choose Files";
+        selectedFiles.textContent = "";
+      } else {
+        fileLabelText.textContent = pdfFilesInput.files.length + " file(s) selected";
+        selectedFiles.textContent = Array.from(pdfFilesInput.files).map(f => f.name).join(', ');
+      }
+    });
+
+    uploadForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      uploadResponse.className = "response-box";
+      const files = pdfFilesInput.files;
+      if (!files.length) {
+        uploadResponse.textContent = "Please select at least one PDF file.";
+        uploadResponse.classList.add("error");
+        return;
+      }
+      if (files.length > 20) {
+        uploadResponse.textContent = "You can upload up to 20 files only.";
+        uploadResponse.classList.add("error");
+        return;
+      }
+      uploadResponse.textContent = "Uploading...";
+      try {
+        const formData = new FormData();
+        for (let i = 0; i < files.length; i++) {
+          formData.append('files', files[i]);
+        }
+        const res = await fetch('https://rag-app-latest.onrender.com/upload-pdfs', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          uploadResponse.textContent = "Error: " + (data.error || res.statusText);
+          uploadResponse.classList.add("error");
+          return;
+        }
+        uploadResponse.textContent = "Success! " + JSON.stringify(data, null, 2);
+        uploadResponse.classList.add("success");
+      } catch (err) {
+        uploadResponse.textContent = "Network error: " + err.message;
+        uploadResponse.classList.add("error");
+      }
+    });
+  </script>
+</body>
+</html>

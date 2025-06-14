@@ -1,0 +1,15 @@
+version: "3.8"
+
+services:
+  rag_app:
+    build: .
+    container_name: rag_app
+    ports:
+      - "5000:5000"
+    environment:
+      - PINECONE_API_KEY=${PINECONE_API_KEY}
+      - PINECONE_INDEX_NAME=${PINECONE_INDEX_NAME}
+      - GEMINI=${GEMINI}
+    volumes:
+      - .:/app
+    restart: unless-stopped

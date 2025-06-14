@@ -1,0 +1,8 @@
+pymupdf
+Flask
+flask_cors
+pinecone
+protobuf
+python-dotenv
+Werkzeug
+google-genai
